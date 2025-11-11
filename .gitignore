@@ -1,0 +1,6 @@
+/.idea
+/__pycache__
+/data_train
+/jupyter
+/runs
+/实验参数记录.md
