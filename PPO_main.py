@@ -9,7 +9,7 @@ import argparse
 from normalization import Normalization, RewardScaling
 from replaybuffer import ReplayBuffer
 from ppo_continuous import PPO_continuous
-
+from compute_reward import compute_reward
 
 def evaluate_policy(args, env, agent, state_norm):
     times = 3
@@ -56,6 +56,8 @@ def main(args, env_name, number, seed):
     args.state_dim = env.state_dim
     args.action_dim = env.action_dim
     args.max_action = env.max_action
+    args.jammers_num = env.jammers_num
+    args.budget = env.budget
     args.max_episode_steps = env._max_episode_steps  # Maximum number of steps per episode
     print("env={}".format(env_name))
     print("state_dim={}".format(args.state_dim))
@@ -138,12 +140,10 @@ class Environment:
     def __init__(self, args):
         # self.number_ED = 5
         # self.state_dim = 1
-        self.sigma = 2e-14  # 环境噪声
+        # self.sigma = 2e-14  # 环境噪声
         self.size_model = 5e6  # 模型大小，单位bit
         self.size_data = 6e7  # 数据集大小，单位bit
         # self.ground_ED = 300  # 地面设备距中心的平均距离
-
-        
         # self.num_ED = 3  # 地面设备的数量
         # self.UAV = 600  # UAV距中心的平均距离
         # self.num_UAV = 2  # UAV设备的数量
@@ -158,20 +158,28 @@ class Environment:
         self.policy_dist = args.policy_dist
         self.state = [2, 8, 18, 18]
         self.action = None
+        self.jammers_num = 2  # jammers的数量
+        self.UAV_num = 3  # UAV BSs的数量
+
         self.state_dim = len(self.state)
-        self.action_dim = 2
-        self.max_action = 100
+        self.time_slot = 2
+        self.action_dim = self.time_slot * self.jammers_num  # 时间维度(timeslot) * 数量
+        self.max_action = 2  # jammers的最大功率
+        self.budget = [3, 3.5]  # jammers的能量预算
 
         self.distance = None
         self.kappa = 1e-27
+
 
     def seed(self, seed):
         np.random.seed(seed)
 
     def step(self, action):
-        x, y = action[0], action[1]
-        a, b, c, d = self.state[0], self.state[1], self.state[2], self.state[3]
-        reward = -a * pow(x, 2) + b * x - c * pow(y, 2) + d * y
+
+        reward = compute_reward(action, self.action_dim, self.jammers_num)
+        # x, y = action[0], action[1]
+        # a, b, c, d = self.state[0], self.state[1], self.state[2], self.state[3]
+        # reward = -a * pow(x, 2) + b * x - c * pow(y, 2) + d * y
         return self.state, reward, True, {}
 
     # def step(self, action):

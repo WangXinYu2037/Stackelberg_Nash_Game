@@ -116,6 +116,9 @@ class PPO_continuous():
         self.use_lr_decay = args.use_lr_decay
         self.use_adv_norm = args.use_adv_norm
 
+        self.jammers_num = args.jammers_num
+        self.budget = args.budget
+
         if self.policy_dist == "Beta":
             self.actor = Actor_Beta(args)
         else:
@@ -131,10 +134,14 @@ class PPO_continuous():
 
     def evaluate(self, s):  # When evaluating the policy, we only use the mean
         s = torch.unsqueeze(torch.tensor(s, dtype=torch.float), 0)
+
         if self.policy_dist == "Beta":
             a = self.actor.mean(s).detach().numpy().flatten()
         else:
-            a = self.actor(s).detach().numpy().flatten()
+            while(1):
+                a = self.actor(s).detach().numpy().flatten()
+                if a[0] + a[1] < self.budget[0] and a[2] + a[3] < self.budget[1]:  # 限制评估策略时的能量预算
+                    break
         return a
 
     def choose_action(self, s):
@@ -146,10 +153,16 @@ class PPO_continuous():
                 a_logprob = dist.log_prob(a)  # The log probability density of the action
         else:
             with torch.no_grad():
-                dist = self.actor.get_dist(s)
-                a = dist.sample()  # Sample the action according to the probability distribution
-                a = torch.clamp(a, -self.max_action, self.max_action)  # [-max,max]
-                a_logprob = dist.log_prob(a)  # The log probability density of the action
+                while(1):
+                    dist = self.actor.get_dist(s)
+                    a = dist.sample()
+                    a = torch.clamp(a, 0, self.max_action)  # [0, max]
+                    a_logprob = dist.log_prob(a)  # [P11, P12 , P21, P22]
+                    if a[0] + a[1] < self.budget[0] and a[2] + a[3] < self.budget[1]:  # 限制能量预算
+                        break
+                # a = dist.sample()  # Sample the action according to the probability distribution
+                # a = torch.clamp(a, -self.max_action, self.max_action)  # [-max,max]
+                # a_logprob = dist.log_prob(a)  # The log probability density of the action
         return a.numpy().flatten(), a_logprob.numpy().flatten()
 
     def update(self, replay_buffer, total_steps):

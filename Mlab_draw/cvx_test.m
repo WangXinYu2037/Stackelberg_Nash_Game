@@ -66,7 +66,7 @@ for t= 1: T
           I2 ];
       
     cvx_begin
-        variable P2(2);
+        variable P2(2); % 长度为2的向量
         uN1 = Bandwidth * log(1 + P2(1) / (Loss(2,2) * I1(2)) ) - E * P2(1);
         uN2 = Bandwidth * log(1 + P2(2) / (Loss(2,2) * I2(2)) ) - E * P2(2);
 
