@@ -65,7 +65,8 @@ class Actor_Gaussian(nn.Module):
     def forward(self, s):
         s = self.activate_func(self.fc1(s))
         s = self.activate_func(self.fc2(s))
-        mean = self.max_action * torch.tanh(self.mean_layer(s))  # [-1,1]->[-max_action,max_action]
+        # mean = self.max_action * torch.tanh(self.mean_layer(s))  # [-1,1]->[-max_action,max_action]
+        mean = 0.5 * self.max_action * (torch.tanh(self.mean_layer(s)) + 1) # [-1,1]->[0,2] -> [0, max_action]
         return mean
 
     def get_dist(self, s):
@@ -119,6 +120,7 @@ class PPO_continuous():
         self.jammers_num = args.jammers_num
         self.budget = args.budget
 
+
         if self.policy_dist == "Beta":
             self.actor = Actor_Beta(args)
         else:
@@ -140,7 +142,7 @@ class PPO_continuous():
         else:
             while(1):
                 a = self.actor(s).detach().numpy().flatten()
-                if a[0] + a[1] < self.budget[0] and a[2] + a[3] < self.budget[1]:  # 限制评估策略时的能量预算
+                if a[0][0] + a[0][1] < self.budget[0] and a[0][2] + a[0][3] < self.budget[1]:  # 限制评估策略时的能量预算
                     break
         return a
 
@@ -157,8 +159,9 @@ class PPO_continuous():
                     dist = self.actor.get_dist(s)
                     a = dist.sample()
                     a = torch.clamp(a, 0, self.max_action)  # [0, max]
+                    print(a)
                     a_logprob = dist.log_prob(a)  # [P11, P12 , P21, P22]
-                    if a[0] + a[1] < self.budget[0] and a[2] + a[3] < self.budget[1]:  # 限制能量预算
+                    if a[0][0] + a[0][1] < self.budget[0] and a[0][2] + a[0][3] < self.budget[1]:  # 限制能量预算
                         break
                 # a = dist.sample()  # Sample the action according to the probability distribution
                 # a = torch.clamp(a, -self.max_action, self.max_action)  # [-max,max]

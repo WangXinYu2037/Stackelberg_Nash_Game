@@ -175,8 +175,8 @@ class Environment:
         np.random.seed(seed)
 
     def step(self, action):
-
-        reward = compute_reward(action, self.action_dim, self.jammers_num)
+        print(action)
+        reward = compute_reward(action, self.time_slot)
         # x, y = action[0], action[1]
         # a, b, c, d = self.state[0], self.state[1], self.state[2], self.state[3]
         # reward = -a * pow(x, 2) + b * x - c * pow(y, 2) + d * y
