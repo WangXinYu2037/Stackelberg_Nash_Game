@@ -9,7 +9,7 @@ Loss = [[3776071953.5462384, 3685714309.525074, 3713654933.068316, 4826858139.90
     [3975061010.9144645, 3984617028.24047, 3685714309.525074, 3883782305.5850515]]
 UAV_max_power = 4
 Bandwidth = 0.5e6
-c_o = 1.5 * 0.5e6
+c_o = 1.1 * 0.5e6
 c_f = 0.12 * 0.5e6
 
 
@@ -84,10 +84,10 @@ def compute_reward(action, time_slot):
 
     reward = 0
     for t in range(time_slot):
-        reward -= Bandwidth * math.log(1 + PN1[t] / (Loss[0][0] * I[3 * t]))
-        reward -= Bandwidth * math.log(1 + PN2[t] / (Loss[1][1] * I[3 * t + 1]))
-        reward -= Bandwidth * math.log(1 + PN3[t] / (Loss[2][2] * I[3 * t + 2]))
-        reward -= c_o * PJ1[t]
-        reward -= c_o * PJ2[t]
+        reward -= pow(0.9, t) * Bandwidth * math.log(1 + PN1[t] / (Loss[0][0] * I[3 * t]))
+        reward -= pow(0.9, t) * Bandwidth * math.log(1 + PN2[t] / (Loss[1][1] * I[3 * t + 1]))
+        reward -= pow(0.9, t) * Bandwidth * math.log(1 + PN3[t] / (Loss[2][2] * I[3 * t + 2]))
+        reward -= pow(0.9, t) * c_o * PJ1[t]
+        reward -= pow(0.9, t) * c_o * PJ2[t]
 
     return reward
