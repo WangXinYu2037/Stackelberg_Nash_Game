@@ -82,8 +82,8 @@ def main(args, env_name, number, seed):
         reward_scaling = RewardScaling(shape=1, gamma=args.gamma)
 
     while total_steps < args.max_train_steps:
-        # s = env.reset()
-        s = env.state
+        s = env.reset()
+        # s = env.state
         if args.use_state_norm:
             s = state_norm(s)
         if args.use_reward_scaling:
@@ -134,7 +134,8 @@ def main(args, env_name, number, seed):
                 # writer.add_scalar('step_rewards_{}'.format(env_name), evaluate_rewards[-1], evaluate_num)
                 # Save the rewards
                 if evaluate_num % args.save_freq == 0:
-                    np.save('./data_train/PPO_continuous_{}_env_{}_number_{}_seed_{}.npy'.format(args.policy_dist, env_name, number, seed), np.array(evaluate_rewards))
+                    np.save('./data_train/PPO_continuous_{}_env_{}_number_{}_seed_{}.npy'.format(args.policy_dist, env_name, number, seed),
+                            np.array(evaluate_rewards))
 
 class Environment:
     def __init__(self, args):
@@ -156,21 +157,16 @@ class Environment:
         # self.f_max = 25e8  # 处理器的最大频率
         self._max_episode_steps = 30
         self.policy_dist = args.policy_dist
-
-        self.state = [3776071953.5462384, 3685714309.525074, 3713654933.068316, 4826858139.903481,
-    4106432277.427634, 3653755103.2599854, 3984617028.24047, 4126651629.719391,
-    3819717104.7990537, 4100063794.523541, 3649757438.1855006, 4333580923.156441,
-     # [4329283766.372562, 4068219975.751717, 3920903631.1161523, 3632477833.380001],
-    3751949385.2653327, 3569275009.1528945, 3749556634.9107757, 4377347096.690601,
-    3975061010.9144645, 3984617028.24047, 3685714309.525074, 3883782305.5850515]
-        # self.state = [2, 8, 18, 18]
+        self.state = None
         self.action = None
         self.jammers_num = 2  # jammers的数量
         self.UAV_num = 3  # UAV BSs的数量
 
-        self.state_dim = len(self.state)
+        # self.state_dim = len(self.state)
+
         self.time_slot = 2
         self.action_dim = self.time_slot * self.jammers_num  # 时间维度(timeslot) * 数量
+        self.state_dim = self.action_dim
         self.max_action = 2  # jammers的最大功率
         self.budget = [3, 3.5]  # jammers的能量预算
 
@@ -184,6 +180,7 @@ class Environment:
     def step(self, action):
         # print(action)
         reward = compute_reward(action, self.time_slot)
+        self.state = self.action
         # x, y = action[0], action[1]
         # a, b, c, d = self.state[0], self.state[1], self.state[2], self.state[3]
         # reward = -a * pow(x, 2) + b * x - c * pow(y, 2) + d * y
@@ -227,6 +224,8 @@ class Environment:
     #     return action, reward, True
 
     def reset(self):
+        while(1):
+            self.state
         # 距离采样
         # sample_distance = []
         # sample_power = []
@@ -252,19 +251,18 @@ class Environment:
         #
         # self.state = sample_power + sample_frequency + self.distance
         # self.action = self.state
-        self.state = np.random.randint(1, 21, size=len(self.state))
+        # self.state = np.random.randint(1, 21, size=len(self.state))
 
         return self.state
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser("Hyperparameters Setting for PPO-continuous")
-    parser.add_argument("--max_train_steps", type=int, default=int(3e4), help=" Maximum number of training steps")
-    parser.add_argument("--evaluate_freq", type=float, default=5e2, help="Evaluate the policy every 'evaluate_freq' steps")
+    parser.add_argument("--max_train_steps", type=int, default=int(3e5), help=" Maximum number of training steps")
+    parser.add_argument("--evaluate_freq", type=float, default=5e3, help="Evaluate the policy every 'evaluate_freq' steps")
     parser.add_argument("--save_freq", type=int, default=20, help="Save frequency")
     parser.add_argument("--policy_dist", type=str, default="Gaussian", help="Beta or Gaussian")
-    # parser.add_argument("--batch_size", type=int, default=2048, help="Batch size")
-    parser.add_argument("--batch_size", type=int, default=64, help="Batch size")
+    parser.add_argument("--batch_size", type=int, default=2048, help="Batch size")
     parser.add_argument("--mini_batch_size", type=int, default=64, help="Minibatch size")
     parser.add_argument("--hidden_width", type=int, default=64, help="The number of neurons in hidden layers of the neural network")
     parser.add_argument("--lr_a", type=float, default=3e-4, help="Learning rate of actor")

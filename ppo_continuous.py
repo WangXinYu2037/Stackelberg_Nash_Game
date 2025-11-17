@@ -142,7 +142,7 @@ class PPO_continuous():
         else:
             while(1):
                 a = self.actor(s).detach().numpy().flatten()
-                if a[0][0] + a[0][1] < self.budget[0] and a[0][2] + a[0][3] < self.budget[1]:  # 限制评估策略时的能量预算
+                if a[0] + a[1] < self.budget[0] and a[2] + a[3] < self.budget[1]:  # 限制评估策略时的能量预算
                     break
         return a
 
@@ -159,7 +159,7 @@ class PPO_continuous():
                     dist = self.actor.get_dist(s)
                     a = dist.sample()
                     a = torch.clamp(a, 0, self.max_action)  # [0, max]
-                    print(a)
+                    # print(a)
                     a_logprob = dist.log_prob(a)  # [P11, P12 , P21, P22]
                     if a[0][0] + a[0][1] < self.budget[0] and a[0][2] + a[0][3] < self.budget[1]:  # 限制能量预算
                         break

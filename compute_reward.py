@@ -40,7 +40,7 @@ def compute_reward(action, time_slot):
     PN1 = UAV_max_power * np.random.rand(1, time_slot).flatten()
     PN2 = UAV_max_power * np.random.rand(1, time_slot).flatten()
     PN3 = UAV_max_power * np.random.rand(1, time_slot).flatten()
-    for _ in range(500):
+    for _ in range(50):
 
         
 
@@ -50,11 +50,11 @@ def compute_reward(action, time_slot):
         uNt1 = Bandwidth * cp.log(1 + PN1[0] / (Loss[0][0] * I[0])) - c_f * PN1[0]
         uNt2 = Bandwidth * cp.log(1 + PN1[1] / (Loss[0][0] * I[3])) - c_f * PN1[1]
         prob = cp.Problem(cp.Maximize(uNt1 + 0.9 * uNt2), [[1, 1] @ PN1 <= 7, PN1 <= [UAV_max_power, UAV_max_power], PN1 >= 0])
-        prob.solve()
+        prob.solve(verbose=False)
         PN1 = PN1.value
 
-        uN1 = Bandwidth * math.log(1 + PN1[0] / (Loss[0][0] * I[0])) - c_f * PN1[0] + 0.9 * Bandwidth * math.log(
-            1 + PN1[1] / (Loss[0][0] * I[3])) - c_f * PN1[1]
+        # uN1 = Bandwidth * math.log(1 + PN1[0] / (Loss[0][0] * I[0])) - c_f * PN1[0] + 0.9 * Bandwidth * math.log(
+        #     1 + PN1[1] / (Loss[0][0] * I[3])) - c_f * PN1[1]
         # print("第一次:", PN1.value)
 
         I = I_calculate(PJ1, PJ2, PN1, PN2, PN3, time_slot)
@@ -64,8 +64,8 @@ def compute_reward(action, time_slot):
         prob = cp.Problem(cp.Maximize(uNt1 + 0.9 * uNt2), [[1, 1] @ PN2 <= 7, PN2 <= [UAV_max_power, UAV_max_power], PN2 >= 0])
         prob.solve()
         PN2 = PN2.value
-        uN2 = Bandwidth * math.log(1 + PN2[0] / (Loss[0][0] * I[0])) - c_f * PN2[0] + 0.9 * Bandwidth * math.log(
-            1 + PN2[1] / (Loss[0][0] * I[3])) - c_f * PN2[1]
+        # uN2 = Bandwidth * math.log(1 + PN2[0] / (Loss[0][0] * I[0])) - c_f * PN2[0] + 0.9 * Bandwidth * math.log(
+        #     1 + PN2[1] / (Loss[0][0] * I[3])) - c_f * PN2[1]
 
         I = I_calculate(PJ1, PJ2, PN1, PN2, PN3, time_slot)
         PN3 = cp.Variable(time_slot)
@@ -74,11 +74,11 @@ def compute_reward(action, time_slot):
         prob = cp.Problem(cp.Maximize(uNt1 + 0.9 * uNt2), [[1, 1] @ PN3 <= 7, PN3 <= [UAV_max_power, UAV_max_power], PN3 >= 0])
         prob.solve()
         PN3 = PN3.value
-        uN3 = Bandwidth * math.log(1 + PN3[0] / (Loss[0][0] * I[0])) - c_f * PN3[0] + 0.9 * Bandwidth * math.log(
-            1 + PN3[1] / (Loss[0][0] * I[3])) - c_f * PN3[1]
+        # uN3 = Bandwidth * math.log(1 + PN3[0] / (Loss[0][0] * I[0])) - c_f * PN3[0] + 0.9 * Bandwidth * math.log(
+        #     1 + PN3[1] / (Loss[0][0] * I[3])) - c_f * PN3[1]
 
-        print(_, PN1, PN2, PN3)
-        print(uN1, uN2, uN3)
+        # print(_, PN1, PN2, PN3)
+        # print(uN1, uN2, uN3)
 
 
 
