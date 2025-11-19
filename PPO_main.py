@@ -5,6 +5,7 @@ import numpy as np
 from torch.utils.tensorboard import SummaryWriter
 import math
 import gym
+
 import argparse
 from normalization import Normalization, RewardScaling
 from replaybuffer import ReplayBuffer
@@ -183,11 +184,12 @@ class Environment:
 
     def step(self, action):
         # print(action)
-        reward = compute_reward(action, self.time_slot)
+        reward, PN_reward = compute_reward(action, self.time_slot)
+
         # x, y = action[0], action[1]
         # a, b, c, d = self.state[0], self.state[1], self.state[2], self.state[3]
         # reward = -a * pow(x, 2) + b * x - c * pow(y, 2) + d * y
-        return self.state, reward, True, {}
+        return self.state, reward, True, PN_reward
 
     # def step(self, action):
     #     """在环境中执行动作返回新的状态、奖励和结束标识符"""
@@ -259,7 +261,7 @@ class Environment:
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser("Hyperparameters Setting for PPO-continuous")
-    parser.add_argument("--max_train_steps", type=int, default=int(2e3), help=" Maximum number of training steps")
+    parser.add_argument("--max_train_steps", type=int, default=int(5e3), help=" Maximum number of training steps")
     parser.add_argument("--evaluate_freq", type=float, default=50, help="Evaluate the policy every 'evaluate_freq' steps")
     parser.add_argument("--save_freq", type=int, default=20, help="Save frequency")
     parser.add_argument("--policy_dist", type=str, default="Gaussian", help="Beta or Gaussian")

@@ -140,10 +140,11 @@ class PPO_continuous():
         if self.policy_dist == "Beta":
             a = self.actor.mean(s).detach().numpy().flatten()
         else:
-            while(1):
-                a = self.actor(s).detach().numpy().flatten()
-                if a[0] + a[1] < self.budget[0] and a[2] + a[3] < self.budget[1]:  # 限制评估策略时的能量预算
-                    break
+            a = self.actor(s).detach().numpy().flatten()
+            # while(1):
+            #     a = self.actor(s).detach().numpy().flatten()
+            #     if a[0] + a[1] < self.budget[0] and a[2] + a[3] < self.budget[1]:  # 限制评估策略时的能量预算
+            #         break
         return a
 
     def choose_action(self, s):
@@ -155,14 +156,18 @@ class PPO_continuous():
                 a_logprob = dist.log_prob(a)  # The log probability density of the action
         else:
             with torch.no_grad():
-                while(1):
-                    dist = self.actor.get_dist(s)
-                    a = dist.sample()
-                    a = torch.clamp(a, 0, self.max_action)  # [0, max]
-                    # print(a)
-                    a_logprob = dist.log_prob(a)  # [P11, P12 , P21, P22]
-                    if a[0][0] + a[0][1] < self.budget[0] and a[0][2] + a[0][3] < self.budget[1]:  # 限制能量预算
-                        break
+                dist = self.actor.get_dist(s)
+                a = dist.sample()
+                a = torch.clamp(a, 0, self.max_action)  # [0, max]
+                a_logprob = dist.log_prob(a)  # [P11, P12 , P21, P22]
+                # while(1):
+                #     dist = self.actor.get_dist(s)
+                #     a = dist.sample()
+                #     a = torch.clamp(a, 0, self.max_action)  # [0, max]
+                #     # print(a)
+                #     a_logprob = dist.log_prob(a)  # [P11, P12 , P21, P22]
+                #     if a[0][0] + a[0][1] < self.budget[0] and a[0][2] + a[0][3] < self.budget[1]:  # 限制能量预算
+                #         break
                 # a = dist.sample()  # Sample the action according to the probability distribution
                 # a = torch.clamp(a, -self.max_action, self.max_action)  # [-max,max]
                 # a_logprob = dist.log_prob(a)  # The log probability density of the action

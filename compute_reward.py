@@ -10,7 +10,7 @@ Loss = [[3776071953.5462384, 3685714309.525074, 3713654933.068316, 4826858139.90
 UAV_max_power = 4
 Bandwidth = 0.5e6
 # c_o = 0.9 * 0.5e6
-c_o = 0.18 * 0.5e6
+c_o = 0.13 * 0.5e6
 c_f = 0.12 * 0.5e6
 
 
@@ -49,7 +49,8 @@ def compute_reward(action, time_slot):
             PN1_var = cp.Variable(time_slot)
             uNt1 = Bandwidth * cp.log(1 + PN1_var[0] / (Loss[0][0] * I[0])) - c_f * PN1_var[0]
             uNt2 = Bandwidth * cp.log(1 + PN1_var[1] / (Loss[0][0] * I[3])) - c_f * PN1_var[1]
-            prob = cp.Problem(cp.Maximize(uNt1 + 0.9 * uNt2), [[1, 1] @ PN1_var <= 7, PN1_var <= [UAV_max_power, UAV_max_power], PN1_var >= 0])
+            # prob = cp.Problem(cp.Maximize(uNt1 + 0.9 * uNt2), [[1, 1] @ PN1_var <= 7, PN1_var <= [UAV_max_power, UAV_max_power], PN1_var >= 0])
+            prob = cp.Problem(cp.Maximize(uNt1 + 0.9 * uNt2), [PN1_var <= [UAV_max_power, UAV_max_power], PN1_var >= 0])
             prob.solve(verbose=False)
             PN1 = PN1_var.value
 
@@ -61,7 +62,8 @@ def compute_reward(action, time_slot):
             PN2_var = cp.Variable(time_slot)
             uNt1 = Bandwidth * cp.log(1 + PN2_var[0] / (Loss[1][1] * I[1])) - c_f * PN2_var[0]
             uNt2 = Bandwidth * cp.log(1 + PN2_var[1] / (Loss[1][1] * I[4])) - c_f * PN2_var[1]
-            prob = cp.Problem(cp.Maximize(uNt1 + 0.9 * uNt2), [[1, 1] @ PN2_var <= 7, PN2_var <= [UAV_max_power, UAV_max_power], PN2_var >= 0])
+            # prob = cp.Problem(cp.Maximize(uNt1 + 0.9 * uNt2), [[1, 1] @ PN2_var <= 7, PN2_var <= [UAV_max_power, UAV_max_power], PN2_var >= 0])
+            prob = cp.Problem(cp.Maximize(uNt1 + 0.9 * uNt2), [PN2_var <= [UAV_max_power, UAV_max_power], PN2_var >= 0])
             prob.solve()
             PN2 = PN2_var.value
             # uN2 = Bandwidth * math.log(1 + PN2[0] / (Loss[0][0] * I[0])) - c_f * PN2[0] + 0.9 * Bandwidth * math.log(
@@ -71,7 +73,8 @@ def compute_reward(action, time_slot):
             PN3_var = cp.Variable(time_slot)
             uNt1 = Bandwidth * cp.log(1 + PN3_var[0] / (Loss[2][2] * I[2])) - c_f * PN3_var[0]
             uNt2 = Bandwidth * cp.log(1 + PN3_var[1] / (Loss[2][2] * I[5])) - c_f * PN3_var[1]
-            prob = cp.Problem(cp.Maximize(uNt1 + 0.9 * uNt2), [[1, 1] @ PN3_var <= 7, PN3_var <= [UAV_max_power, UAV_max_power], PN3_var >= 0])
+            # prob = cp.Problem(cp.Maximize(uNt1 + 0.9 * uNt2), [[1, 1] @ PN3_var <= 7, PN3_var <= [UAV_max_power, UAV_max_power], PN3_var >= 0])
+            prob = cp.Problem(cp.Maximize(uNt1 + 0.9 * uNt2), [PN3_var <= [UAV_max_power, UAV_max_power], PN3_var >= 0])
             prob.solve()
             PN3 = PN3_var.value
         except:
@@ -92,11 +95,19 @@ def compute_reward(action, time_slot):
     #     PN2 = PN2.value
     # if type(PN3) == cp.Variable:
     #     PN3 = PN3.value
+    PN1_reward = 0
+    PN2_reward = 0
+    PN3_reward = 0
     for t in range(time_slot):
-        reward -= pow(0.9, t) * Bandwidth * math.log(1 + PN1[t] / (Loss[0][0] * I[3 * t]))
-        reward -= pow(0.9, t) * Bandwidth * math.log(1 + PN2[t] / (Loss[1][1] * I[3 * t + 1]))
-        reward -= pow(0.9, t) * Bandwidth * math.log(1 + PN3[t] / (Loss[2][2] * I[3 * t + 2]))
-        reward -= pow(0.9, t) * c_o * PJ1[t]
-        reward -= pow(0.9, t) * c_o * PJ2[t]
+        tmp1 = pow(0.9, t) * Bandwidth * math.log(1 + PN1[t] / (Loss[0][0] * I[3 * t]))
+        tmp2 = pow(0.9, t) * Bandwidth * math.log(1 + PN2[t] / (Loss[1][1] * I[3 * t + 1]))
+        tmp3 = pow(0.9, t) * Bandwidth * math.log(1 + PN3[t] / (Loss[2][2] * I[3 * t + 2]))
+        PN1_reward += tmp1
+        PN2_reward += tmp2
+        PN3_reward += tmp3
 
-    return reward
+        reward -= pow(0.9, t) * (tmp1 + tmp2 + tmp3)
+        reward -= pow(0.9, t) * c_o * (PJ1[t] + PJ2[t])
+
+    PN_reward = [PN1_reward, PN2_reward, PN3_reward]
+    return reward, PN_reward
