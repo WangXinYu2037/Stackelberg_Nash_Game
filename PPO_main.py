@@ -15,6 +15,7 @@ from compute_reward import compute_reward
 def evaluate_policy(args, env, agent, state_norm):
     times = 3
     evaluate_reward = 0
+    evaluate_PN_reward = [0, 0, 0]
     for _ in range(times):
         # s = env.reset()
         s = env.state
@@ -29,7 +30,7 @@ def evaluate_policy(args, env, agent, state_norm):
                 action = 2 * (a - 0.5) * args.max_action  # [0,1]->[-max,max]
             else:
                 action = a
-            s_, r, done, _ = env.step(action)
+            s_, r, done, PN_reward = env.step(action)
             print(action, s_, r, done)
             print("评估时选取的动作", a, "本次动作的奖励", r)
             if args.use_state_norm:
@@ -38,7 +39,11 @@ def evaluate_policy(args, env, agent, state_norm):
             s = s_
         evaluate_reward += episode_reward
 
-    return evaluate_reward / times
+        for i in range(len(evaluate_PN_reward)):
+            evaluate_PN_reward[i] += PN_reward[i]
+
+        evaluate_PN_reward = [evaluate_PN_reward[i]/times for i in range(len(evaluate_PN_reward))]
+    return evaluate_reward / times, evaluate_PN_reward
 
 
 def main(args, env_name, number, seed):
@@ -68,6 +73,7 @@ def main(args, env_name, number, seed):
 
     evaluate_num = 0  # Record the number of evaluations
     evaluate_rewards = []  # Record the rewards during the evaluating
+    evaluate_PN_rewards = []  # Record the rewards of PN1, PN2 and PN3
     total_steps = 0  # Record the total steps during the training
 
     replay_buffer = ReplayBuffer(args)
@@ -128,14 +134,17 @@ def main(args, env_name, number, seed):
             # Evaluate the policy every 'evaluate_freq' steps
             if total_steps % args.evaluate_freq == 0:
                 evaluate_num += 1
-                evaluate_reward = evaluate_policy(args, env_evaluate, agent, state_norm)
+                evaluate_reward, evaluate_PN_reward = evaluate_policy(args, env_evaluate, agent, state_norm)
                 evaluate_rewards.append(evaluate_reward)
+                evaluate_PN_rewards.append(evaluate_PN_reward)
                 print("evaluate_num:{} \t evaluate_reward:{} \t".format(evaluate_num, evaluate_reward))
                 writer.add_scalar('step_rewards_{}'.format(env_name), evaluate_rewards[-1], global_step=total_steps)
                 # writer.add_scalar('step_rewards_{}'.format(env_name), evaluate_rewards[-1], evaluate_num)
                 # Save the rewards
                 if evaluate_num % args.save_freq == 0:
                     np.save('./data_train/PPO_continuous_{}_env_{}_number_{}_seed_{}.npy'.format(args.policy_dist, env_name, number, seed), np.array(evaluate_rewards))
+                    np.save('./data_train/PN_rewards_PPO_continuous_{}_env_{}_number_{}_seed_{}.npy'.format(args.policy_dist, env_name, number, seed), np.array(evaluate_PN_rewards))
+
 
 class Environment:
     def __init__(self, args):
