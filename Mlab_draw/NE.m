@@ -71,26 +71,31 @@ end
 x = linspace(1, T, T);
 figure(1);
 
+% set(groot, 'DefaultTextInterpreter', 'latex');
+% set(groot, 'DefaultAxesTickLabelInterpreter', 'latex');
+
 subplot(1, 2, 1);
-plot(x, y1, 'LineStyle','-', 'LineWidth',2, 'Displayname','N1');
+plot(x, y1, 'LineStyle','-', 'LineWidth',2, 'Displayname','N_1');
 hold on;
 grid on;
-plot(x, y2, 'LineStyle','-.', 'LineWidth',2, 'Displayname','N2');
-plot(x, y3, 'LineStyle',':', 'LineWidth',2, 'Displayname', 'N3');
+plot(x, y2, 'LineStyle','-.', 'LineWidth',2, 'Displayname','N_2');
+plot(x, y3, 'LineStyle',':', 'LineWidth',2, 'Displayname', 'N_3');
 % plot(x, y3, 'Displayname', 'N4');
 ylim([0.2 1]);
-xlabel('Iteration'); ylabel('Power (W)');
-legend;
+xlabel('Game Iteration'); ylabel('Transmit Power $(W)$');
+legend('$N_1$','$N_2$', '$N_3$', 'Interpreter','latex');
 hold off;
+
+
 % figure(2);
 subplot(1, 2, 2);
-plot(x, Y1, 'LineStyle','-', 'LineWidth',2, 'Displayname','N1');
+plot(x, Y1, 'LineStyle','-', 'LineWidth',2, 'Displayname','N_1');
 hold on;
 grid on;
-plot(x, Y2, 'LineStyle','-.', 'LineWidth',2, 'Displayname','N2');
-plot(x, Y3, 'LineStyle',':', 'LineWidth',2,'Displayname', 'N3');
+plot(x, Y2, 'LineStyle','-.', 'LineWidth',2, 'Displayname','N_2');
+plot(x, Y3, 'LineStyle',':', 'LineWidth',2,'Displayname', 'N_3');
 % plot(x, Y4, 'Displayname', 'N4');
 ylim([0.2 1]);
-xlabel('Iteration'); ylabel('Power (W)');
-legend;
+xlabel('Game Iteration'); ylabel('Transmit Power $(W)$');
+legend('$N_1$','$N_2$', '$N_3$', 'Interpreter','latex');
 hold off;

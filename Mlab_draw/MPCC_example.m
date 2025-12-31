@@ -128,6 +128,7 @@ disp(['leader objective (u^o) = ', num2str(-fval)]); % fmincon 最小化，所�
 % hold on; grid on;
 % plot(T, res.PJ1_T, 'LineWidth',2, 'Displayname','J1');
 
+%%
 
 function val = leader_objective(x, idx)
     global c_f c_o;
@@ -226,23 +227,38 @@ function stop = myOutputFcn(x, optimValues, state)
     if isequal(state, 'done')
         % 在优化结束时绘制 动作 的历史变化图
         figure(2);
-        plot(1:length(PN1), PN1,  'LineWidth',1.2, 'LineStyle','-', 'Marker', '^', 'DisplayName', 'N1', 'MarkerIndices', 1:10:length(PN1)); hold on;
-        plot(1:length(PN2), PN2,  'LineWidth',1.2, 'LineStyle','-.', 'Marker', 'd', 'DisplayName', 'N2', 'MarkerIndices', 1:10:length(PN2));
-        plot(1:length(PN3), PN3,  'LineWidth',1.2, 'LineStyle',':', 'Marker', 's', 'DisplayName', 'N3', 'MarkerIndices', 1:10:length(PN3));
+        plot(1:length(PN1), PN1,  'LineWidth',2, 'LineStyle','-', 'Marker', '^', 'MarkerSize', 8, 'MarkerFaceColor','none', 'DisplayName', 'N1', 'MarkerIndices', 1:10:length(PN1)); hold on;
+%         x = 1:length(PN1);
+%         idx = 1:10:length(PN1);
+% 
+%         plot(x, PN1, ...
+%              'LineWidth', 2, ...
+%              'LineStyle', '-', ...
+%              'DisplayName', 'N1'); 
+%         hold on
+%         scatter(x(idx), PN1(idx), ...
+%         64, ...                  % 对应 MarkerSize≈8
+%         '^', ...
+%         'MarkerEdgeColor', 'k', ...
+%         'MarkerFaceColor', 'none', ...
+%         'LineWidth', 1);      
+        plot(1:length(PN2), PN2,  'LineWidth',2, 'LineStyle','-.', 'Marker', 's', 'MarkerSize', 8,  'DisplayName', 'N2', 'MarkerIndices', 1:10:length(PN2));
+        plot(1:length(PN3), PN3,  'LineWidth',2, 'LineStyle',':', 'Marker', 'd', 'MarkerSize', 8,  'DisplayName', 'N3', 'MarkerIndices', 1:10:length(PN3));
         
-        plot(1:length(PJ1), PJ1,  'LineWidth',1.2, 'LineStyle','-', 'Marker', 'x', 'DisplayName', 'J1', 'MarkerIndices', 1:10:length(PJ1));
-        plot(1:length(PJ2), PJ2,  'LineWidth',1.2, 'LineStyle','--', 'Marker', 'o', 'DisplayName', 'J2', 'MarkerIndices', 1:10:length(PJ2));
-
-        xlabel('Iteration');
-        ylabel('Power (W)');
+        plot(1:length(PJ1), PJ1,  'LineWidth',2, 'LineStyle','-', 'Marker', 'v', 'MarkerSize', 8,  'DisplayName', 'J1', 'MarkerIndices', 1:10:length(PJ1));
+        plot(1:length(PJ2), PJ2,  'LineWidth',2, 'LineStyle','--', 'Marker', 'o', 'MarkerSize', 8,  'DisplayName', 'J2', 'MarkerIndices', 1:10:length(PJ2));
+        PJ2(length(PJ2))
+        xlabel('Game Iteration');
+        ylabel('Transmit Power $(W)$');
+        xlim([0 100]);
         ylim([-0.2 3.2]);
-        legend('location', 'best');
+        legend('$N_1$','$N_2$', '$N_3$', '$J_1$', '$J_2$','Interpreter','latex', 'location', 'best');
         grid on;
         % 绘制Feasibility和optimality
-        figure(3);
-        plot(iters,feasi,"o");hold on;
-        plot(iters,grads,"x");
-        xlabel('Iteration');
+%         figure(3);
+%         plot(iters,feasi,"o");hold on;
+%         plot(iters,grads,"x");
+%         xlabel('Iteration');
 %         ylabel('Power (W)');
         
         % 绘制效用

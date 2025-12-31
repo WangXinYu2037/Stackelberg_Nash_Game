@@ -21,9 +21,9 @@ env.c = 3e8;  % light speed m/s
 env.H = 150;  % Height m
 env.E = 0.3 * 0.5e6;  %
 env.c_f = 0.12 * 0.5e6; % follower 能耗系数 (线性)
-env.c_o = 3 * 0.5e6;  % leader 能耗系数 (线性)
+env.c_o = 1.5 * 0.5e6;  % leader 能耗系数 (线性)
 env.count = 0;      
-Pmax_f = [env.P_max;env.P_max;env.P_max];   % follower 最大功率
+Pmax_f = 3 .* [env.P_max;env.P_max;env.P_max];   % follower 最大功率
 Pmax_o = 2 .* [env.P_max;env.P_max];     % leader 最大功率 
 
 J = 2; M = 3;
@@ -55,12 +55,38 @@ x0(idx.P) = 0.9;
 x0(idx.KKT_lambda) = 0.1;
 x0(idx.KKT_mu) = 0.1;
 x0(idx.KKT_theta) = 0.1;
+x0 = [
+
+   1.0
+    1.5010
+    1.7309
+    1.2251
+    0.5
+    1.0554
+    0.9590
+    1.6027
+    0.4557
+    0.9962
+    1.8017
+    1.1493
+    1.6904
+    1.4773
+]
+% x0(1:5) = [
+% 
+%    1.0
+%     1.5010
+%     1.7309
+%     1.2251
+%     0.5
+% 
+% ]
 
 %-----------------------限制变量的上下界
 lb = zeros(tail,1); % 全部非负
 ub = inf(tail,1);
 ub(idx.Po) = 2 * env.P_max; % 功率上界
-% ub(idx.P) = 1.5 * env.P_max;
+ub(idx.P) = 3 * env.P_max;
 
 
 %------------------------设置fmincon options
@@ -125,7 +151,7 @@ function [c_neq, c_eq] = followers_kkt_constraints(x, idx, env, Loss)
     c_neq = [];
     c_eq = [];
     % 不等式约束，-PN <0, PN -P_max < 0
-    Pmax_f = [env.P_max;env.P_max;env.P_max];
+    Pmax_f = 3 .* [env.P_max;env.P_max;env.P_max];
     c_neq = [c_neq; -PN; PN - Pmax_f; -lambda; -mu; -theta];
     I = I_calcu(PN', PJ');
     [RN, uN] = uN_calcu(PN', I');
@@ -195,9 +221,9 @@ function stop = myOutputFcn(x, optimValues, state)
         legend('location', 'best');
         grid on;
         
-        figure(3);
-        plot(iters,feasi,"o",iters,grads,"x");
-        figure(4);
+%         figure(3);
+%         plot(iters,feasi,"o",iters,grads,"x");
+%         figure(4);
         
     end
 end

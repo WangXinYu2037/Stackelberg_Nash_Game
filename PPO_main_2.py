@@ -5,15 +5,17 @@ import numpy as np
 from torch.utils.tensorboard import SummaryWriter
 import math
 import gym
+
 import argparse
 from normalization import Normalization, RewardScaling
 from replaybuffer import ReplayBuffer
 from ppo_continuous import PPO_continuous
-from compute_reward import compute_reward
+from compute_reward import compute_reward, compute_reward_static, compute_reward_random
 
 def evaluate_policy(args, env, agent, state_norm):
     times = 3
     evaluate_reward = 0
+    evaluate_PN_reward = [0, 0, 0]
     for _ in range(times):
         # s = env.reset()
         s = env.state
@@ -28,7 +30,7 @@ def evaluate_policy(args, env, agent, state_norm):
                 action = 2 * (a - 0.5) * args.max_action  # [0,1]->[-max,max]
             else:
                 action = a
-            s_, r, done, _ = env.step(action)
+            s_, r, done, PN_reward = env.step(action)
             print(action, s_, r, done)
             print("评估时选取的动作", a, "本次动作的奖励", r)
             if args.use_state_norm:
@@ -37,7 +39,11 @@ def evaluate_policy(args, env, agent, state_norm):
             s = s_
         evaluate_reward += episode_reward
 
-    return evaluate_reward / times
+        for i in range(len(evaluate_PN_reward)):
+            evaluate_PN_reward[i] += PN_reward[i]
+
+        evaluate_PN_reward = [evaluate_PN_reward[i]/times for i in range(len(evaluate_PN_reward))]
+    return evaluate_reward / times, evaluate_PN_reward
 
 
 def main(args, env_name, number, seed):
@@ -67,6 +73,7 @@ def main(args, env_name, number, seed):
 
     evaluate_num = 0  # Record the number of evaluations
     evaluate_rewards = []  # Record the rewards during the evaluating
+    evaluate_PN_rewards = []  # Record the rewards of PN1, PN2 and PN3
     total_steps = 0  # Record the total steps during the training
 
     replay_buffer = ReplayBuffer(args)
@@ -82,8 +89,8 @@ def main(args, env_name, number, seed):
         reward_scaling = RewardScaling(shape=1, gamma=args.gamma)
 
     while total_steps < args.max_train_steps:
-        s = env.reset()
-        # s = env.state
+        # s = env.reset()
+        s = env.state
         if args.use_state_norm:
             s = state_norm(s)
         if args.use_reward_scaling:
@@ -127,15 +134,17 @@ def main(args, env_name, number, seed):
             # Evaluate the policy every 'evaluate_freq' steps
             if total_steps % args.evaluate_freq == 0:
                 evaluate_num += 1
-                evaluate_reward = evaluate_policy(args, env_evaluate, agent, state_norm)
+                evaluate_reward, evaluate_PN_reward = evaluate_policy(args, env_evaluate, agent, state_norm)
                 evaluate_rewards.append(evaluate_reward)
+                evaluate_PN_rewards.append(evaluate_PN_reward)
                 print("evaluate_num:{} \t evaluate_reward:{} \t".format(evaluate_num, evaluate_reward))
                 writer.add_scalar('step_rewards_{}'.format(env_name), evaluate_rewards[-1], global_step=total_steps)
                 # writer.add_scalar('step_rewards_{}'.format(env_name), evaluate_rewards[-1], evaluate_num)
                 # Save the rewards
                 if evaluate_num % args.save_freq == 0:
-                    np.save('./data_train/PPO_continuous_{}_env_{}_number_{}_seed_{}.npy'.format(args.policy_dist, env_name, number, seed),
-                            np.array(evaluate_rewards))
+                    np.save('./data_train/lr2e5PPO_continuous_{}_env_{}_number_{}_seed_{}.npy'.format(args.policy_dist, env_name, number, seed), np.array(evaluate_rewards))
+                    # np.save('./data_train/PN_rewards_PPO_continuous_{}_env_{}_number_{}_seed_{}.npy'.format(args.policy_dist, env_name, number, seed), np.array(evaluate_PN_rewards))
+
 
 class Environment:
     def __init__(self, args):
@@ -157,16 +166,21 @@ class Environment:
         # self.f_max = 25e8  # 处理器的最大频率
         self._max_episode_steps = 30
         self.policy_dist = args.policy_dist
-        self.state = None
+
+        self.state = [3776071953.5462384, 3685714309.525074, 3713654933.068316, 4826858139.903481,
+    4106432277.427634, 3653755103.2599854, 3984617028.24047, 4126651629.719391,
+    3819717104.7990537, 4100063794.523541, 3649757438.1855006, 4333580923.156441,
+     # [4329283766.372562, 4068219975.751717, 3920903631.1161523, 3632477833.380001],
+    3751949385.2653327, 3569275009.1528945, 3749556634.9107757, 4377347096.690601,
+    3975061010.9144645, 3984617028.24047, 3685714309.525074, 3883782305.5850515]
+        # self.state = [2, 8, 18, 18]
         self.action = None
         self.jammers_num = 2  # jammers的数量
         self.UAV_num = 3  # UAV BSs的数量
 
-        # self.state_dim = len(self.state)
-
+        self.state_dim = len(self.state)
         self.time_slot = 2
         self.action_dim = self.time_slot * self.jammers_num  # 时间维度(timeslot) * 数量
-        self.state_dim = self.action_dim
         self.max_action = 2  # jammers的最大功率
         self.budget = [3, 3.5]  # jammers的能量预算
 
@@ -179,12 +193,12 @@ class Environment:
 
     def step(self, action):
         # print(action)
-        reward = compute_reward(action, self.time_slot)
-        self.state = self.action
+        reward, PN_reward = compute_reward(action, self.time_slot)
+
         # x, y = action[0], action[1]
         # a, b, c, d = self.state[0], self.state[1], self.state[2], self.state[3]
         # reward = -a * pow(x, 2) + b * x - c * pow(y, 2) + d * y
-        return self.state, reward, True, {}
+        return self.state, reward, True, PN_reward
 
     # def step(self, action):
     #     """在环境中执行动作返回新的状态、奖励和结束标识符"""
@@ -224,8 +238,6 @@ class Environment:
     #     return action, reward, True
 
     def reset(self):
-        while(1):
-            self.state
         # 距离采样
         # sample_distance = []
         # sample_power = []
@@ -251,22 +263,23 @@ class Environment:
         #
         # self.state = sample_power + sample_frequency + self.distance
         # self.action = self.state
-        # self.state = np.random.randint(1, 21, size=len(self.state))
+        self.state = np.random.randint(1, 21, size=len(self.state))
 
         return self.state
 
-
+#5e-4
 if __name__ == '__main__':
     parser = argparse.ArgumentParser("Hyperparameters Setting for PPO-continuous")
-    parser.add_argument("--max_train_steps", type=int, default=int(3e5), help=" Maximum number of training steps")
-    parser.add_argument("--evaluate_freq", type=float, default=5e3, help="Evaluate the policy every 'evaluate_freq' steps")
+    parser.add_argument("--max_train_steps", type=int, default=int(10e3), help=" Maximum number of training steps")
+    parser.add_argument("--evaluate_freq", type=float, default=50, help="Evaluate the policy every 'evaluate_freq' steps")
     parser.add_argument("--save_freq", type=int, default=20, help="Save frequency")
     parser.add_argument("--policy_dist", type=str, default="Gaussian", help="Beta or Gaussian")
-    parser.add_argument("--batch_size", type=int, default=2048, help="Batch size")
+    # parser.add_argument("--batch_size", type=int, default=2048, help="Batch size")
+    parser.add_argument("--batch_size", type=int, default=64, help="Batch size")
     parser.add_argument("--mini_batch_size", type=int, default=64, help="Minibatch size")
     parser.add_argument("--hidden_width", type=int, default=64, help="The number of neurons in hidden layers of the neural network")
-    parser.add_argument("--lr_a", type=float, default=3e-4, help="Learning rate of actor")
-    parser.add_argument("--lr_c", type=float, default=3e-4, help="Learning rate of critic")
+    parser.add_argument("--lr_a", type=float, default=2e-5, help="Learning rate of actor")
+    parser.add_argument("--lr_c", type=float, default=2e-5, help="Learning rate of critic")
     parser.add_argument("--gamma", type=float, default=0.99, help="Discount factor")
     parser.add_argument("--lamda", type=float, default=0.95, help="GAE parameter")
     parser.add_argument("--epsilon", type=float, default=0.2, help="PPO clip parameter")

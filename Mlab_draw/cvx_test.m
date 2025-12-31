@@ -3,7 +3,7 @@ clc;clear;close
 P_max = 1;  % max transmission power
 Bandwidth = 0.5e6;  % Hz
 n0 = -170;  % dBm/Hz 计算得到的白噪声功率近似为0
-sigma2 = 10 .^ (n0 * Bandwidth / 10) * 0.001;  % W
+sigma2 = 10 .^ (n0 * Bandwidth / 10) * 0.001;  % W   错了，这里计算过程大错特错了，应该是-170 + 10log(0.5e6, 10) dBm，不过反正都很小，不影响
 a = 11.95;
 b = 0.14;
 uNLoS = 23;
@@ -99,44 +99,46 @@ for t= 1: T
     PN(:, 3) = P3;
     u3_T(t) = uN1 + 0.9 * uN2;
 end
-%%
+%% 绘制图4
 figure(1);
 hold on; grid on;
 plot(P1_T(:, 1), P1_T(:, 2), 'LineWidth',2, 'Displayname','N1');
-text(P1_T(T+1, 1), P1_T(T+1, 2), {'★'}, 'FontSize',12, 'HorizontalAlignment','center', 'color', '#7E2F8E');
-text(P1_T(T+1, 1), P1_T(T+1, 2), {'  (0.267,0.284)'}, 'FontSize',12, 'color', '#7E2F8E', 'FontName','Times New Roman');
+text(P1_T(T+1, 1), P1_T(T+1, 2), {'★'}, 'FontSize',12, 'HorizontalAlignment','center', 'color', '#8B0000');
+text(P1_T(T+1, 1)+0.05, P1_T(T+1, 2), '$\mathbf{(0.267,0.284)}$', 'FontSize',12, 'FontName','Times New Roman', 'FontWeight','bold');
 
 plot(P2_T(:, 1), P2_T(:, 2), 'LineWidth',2, 'Displayname','N2');
-text(P2_T(T+1, 1), P2_T(T+1, 2), {'★'}, 'FontSize',12, 'HorizontalAlignment','center', 'color', '#77AC30');
-text(P2_T(T+1, 1)-0.06, P2_T(T+1, 2) - 0.08, {'  (0.716,0.683)'}, 'FontSize',12, 'color', '#77AC30', 'FontName','Times New Roman');
+text(P2_T(T+1, 1), P2_T(T+1, 2), {'★'}, 'FontSize',12, 'HorizontalAlignment','center', 'color', '#8B0000');
+text(P2_T(T+1, 1)-0.06, P2_T(T+1, 2) - 0.08, '$\mathbf{(0.716,0.683)}$', 'FontSize',12, 'FontName','Times New Roman', 'FontWeight','bold');
 
 plot(P3_T(:, 1), P3_T(:, 2), 'LineWidth',2, 'Displayname','N3');
-text(P3_T(T+1, 1), P3_T(T+1, 2), {'★'}, 'FontSize',12, 'HorizontalAlignment','center', 'color', '#4DBEEE');
-text(P3_T(T+1, 1) - 0.2, P3_T(T+1, 2), {'(0.883,0.896)'}, 'FontSize',12, 'color', '#4DBEEE', 'FontName','Times New Roman');
-xlabel('Power (W) when $t = 1$', 'Interpreter', 'latex', 'FontName','Times New Roman'); 
-ylabel('Power (W) when $t = 2$', 'Interpreter', 'latex', 'FontName','Times New Roman');
+text(P3_T(T+1, 1), P3_T(T+1, 2), {'★'}, 'FontSize',12, 'HorizontalAlignment','center', 'color', '#8B0000');
+text(P3_T(T+1, 1) - 0.2, P3_T(T+1, 2), '$\mathbf{(0.883,0.896)}$', 'FontSize',12, 'FontName','Times New Roman', 'FontWeight','bold');
+xlabel('Transmit Power $(W)$ when $t = 1$', 'Interpreter', 'latex', 'FontName','Times New Roman'); 
+ylabel('Transmit Power $(W$) when $t = 2$', 'Interpreter', 'latex', 'FontName','Times New Roman');
 xlim([0.25 1]); ylim([0.25 1]);
-legend('location', 'best');
+legend('$N_1$','$N_2$', '$N_3$','Interpreter','latex', 'location', 'best');
 % 
 ax1 = axes('Position', [0.2 0.66 0.25 0.25]);
 hold on;
 plot(P2_T(:, 1), P2_T(:, 2), 'LineWidth',2, 'Displayname','N2', 'color', '#D95319');
-% text(P2_T(T+1, 1), P2_T(T+1, 2), {'★'}, 'FontSize',12, 'HorizontalAlignment','center', 'color', '#77AC30');
+text(P2_T(T+1, 1), P2_T(T+1, 2), {'★'}, 'FontSize',12, 'HorizontalAlignment','center', 'color', '#8B0000');
 plot(P3_T(:, 1), P3_T(:, 2), 'LineWidth',2, 'Displayname','N3',  'color', '#EDB120');
 
-xlim([0.710 0.720]); ylim([0.675 0.695]);
+xlim([0.68 0.720]); ylim([0.68 0.72]);
 grid on;
 set(ax1, 'Box', 'on')
-%%
+%% 绘制图5
 Tx = [1:1:300];
-plot(Tx, u1_T, 'LineWidth',1.5, 'LineStyle','-', 'Displayname','N1', 'Marker', '^', 'MarkerIndices', 1:30:length(Tx));
+plot(Tx, u1_T, 'LineWidth',2, 'LineStyle','-', 'Displayname','N1', 'Marker', '^', 'MarkerSize', 5, 'MarkerIndices', 1:30:length(Tx));
 hold on; grid on;
-plot(Tx, u2_T, 'LineWidth',1.5, 'LineStyle','-.','Displayname','N2', 'Marker', 'd', 'MarkerIndices', 1:30:length(Tx));
-plot(Tx, u3_T, 'LineWidth',1.5, 'LineStyle',':', 'Displayname','N3', 'Marker', 's', 'MarkerIndices', 1:30:length(Tx));
-legend('location', 'east');
-xlabel('Iteration'); ylabel('Utility');
-% set(gca,'FontName','Times New Roman','fontsize',10)
-% figure(1);
+text(110,3.2e4, 'Game Iteration $=220$','FontSize',12, 'FontName','Times New Roman', 'FontWeight','bold');
+plot(Tx, u2_T, 'LineWidth',2, 'LineStyle','-.','Displayname','N2', 'Marker', 'd',  'MarkerSize', 5, 'MarkerIndices', 1:30:length(Tx));
+plot(Tx, u3_T, 'LineWidth',2, 'LineStyle',':', 'Displayname','N3', 'Marker', 's',  'MarkerSize', 5, 'MarkerIndices', 1:30:length(Tx));
+legend('$N_1$','$N_2$', '$N_3$','Interpreter','latex', 'location', 'east','fontsize',12);
+xlabel('Game Iteration'); ylabel('Utility for UAV-BSs');
+set(gca,'FontName','Times New Roman','fontsize',12)
+xline(220,'LineWidth',2,'Color','#8B0000','HandleVisibility','off');
+figure(1);
 
 % arrowPlot(P1_T(:,1), P1_T(:,2), 'number', 3, 'LineWidth', 1)
 % hold on;

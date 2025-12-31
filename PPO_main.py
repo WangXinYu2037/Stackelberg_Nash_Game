@@ -10,7 +10,7 @@ import argparse
 from normalization import Normalization, RewardScaling
 from replaybuffer import ReplayBuffer
 from ppo_continuous import PPO_continuous
-from compute_reward import compute_reward
+from compute_reward import compute_reward, compute_reward_static, compute_reward_random
 
 def evaluate_policy(args, env, agent, state_norm):
     times = 3
@@ -142,8 +142,8 @@ def main(args, env_name, number, seed):
                 # writer.add_scalar('step_rewards_{}'.format(env_name), evaluate_rewards[-1], evaluate_num)
                 # Save the rewards
                 if evaluate_num % args.save_freq == 0:
-                    np.save('./data_train/PPO_continuous_{}_env_{}_number_{}_seed_{}.npy'.format(args.policy_dist, env_name, number, seed), np.array(evaluate_rewards))
-                    np.save('./data_train/PN_rewards_PPO_continuous_{}_env_{}_number_{}_seed_{}.npy'.format(args.policy_dist, env_name, number, seed), np.array(evaluate_PN_rewards))
+                    np.save('./data_train/lr1e4PPO_continuous_{}_env_{}_number_{}_seed_{}.npy'.format(args.policy_dist, env_name, number, seed), np.array(evaluate_rewards))
+                    # np.save('./data_train/PN_rewards_PPO_continuous_{}_env_{}_number_{}_seed_{}.npy'.format(args.policy_dist, env_name, number, seed), np.array(evaluate_PN_rewards))
 
 
 class Environment:
@@ -267,10 +267,10 @@ class Environment:
 
         return self.state
 
-
+#5e-4
 if __name__ == '__main__':
     parser = argparse.ArgumentParser("Hyperparameters Setting for PPO-continuous")
-    parser.add_argument("--max_train_steps", type=int, default=int(5e3), help=" Maximum number of training steps")
+    parser.add_argument("--max_train_steps", type=int, default=int(10e3), help=" Maximum number of training steps")
     parser.add_argument("--evaluate_freq", type=float, default=50, help="Evaluate the policy every 'evaluate_freq' steps")
     parser.add_argument("--save_freq", type=int, default=20, help="Save frequency")
     parser.add_argument("--policy_dist", type=str, default="Gaussian", help="Beta or Gaussian")
@@ -278,8 +278,8 @@ if __name__ == '__main__':
     parser.add_argument("--batch_size", type=int, default=64, help="Batch size")
     parser.add_argument("--mini_batch_size", type=int, default=64, help="Minibatch size")
     parser.add_argument("--hidden_width", type=int, default=64, help="The number of neurons in hidden layers of the neural network")
-    parser.add_argument("--lr_a", type=float, default=3e-4, help="Learning rate of actor")
-    parser.add_argument("--lr_c", type=float, default=3e-4, help="Learning rate of critic")
+    parser.add_argument("--lr_a", type=float, default=2e-5, help="Learning rate of actor")
+    parser.add_argument("--lr_c", type=float, default=2e-5, help="Learning rate of critic")
     parser.add_argument("--gamma", type=float, default=0.99, help="Discount factor")
     parser.add_argument("--lamda", type=float, default=0.95, help="GAE parameter")
     parser.add_argument("--epsilon", type=float, default=0.2, help="PPO clip parameter")
